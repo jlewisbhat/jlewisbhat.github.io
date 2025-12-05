@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>jlewisbhat — Make America Great Again</title>
+  <meta name="description" content="Personal site for GitHub user jlewisbhat — MAGA themed portfolio and projects." />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#b22234" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="jlewisbhat — Make America Great Again" />
+  <meta property="og:description" content="A MAGA themed site showcasing projects and work by jlewisbhat." />
+  <meta property="og:image" content="https://github.com/jlewisbhat.png" />
+  <meta property="og:type" content="website" />
+</head>
+<body class="patriotic">
+  <header class="site-header" role="banner">
+    <div class="wrap header-grid">
+      <div class="hat" aria-hidden="true">
+        <div class="hat-top">MAGA</div>
+        <div class="hat-band">MAKE AMERICA GREAT AGAIN</div>
+      </div>
+
+      <div class="hero-text">
+        <img class="avatar" src="https://github.com/jlewisbhat.png" alt="Avatar for GitHub user jlewisbhat" />
+        <div>
+          <h1 class="display-name">jlewisbhat</h1>
+          <p class="lead">Developer • Patriot • Builder of practical tools</p>
+          <p class="meta-links">
+            <a class="btn" href="https://github.com/jlewisbhat" rel="noopener" target="_blank">View GitHub</a>
+            <a class="btn outline" href="https://github.com/jlewisbhat?tab=repositories" rel="noopener" target="_blank">Repositories</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="main" role="main">
+    <section id="about" class="card">
+      <h2>About</h2>
+      <p>
+        Welcome — this is the official personal site for GitHub user <strong>jlewisbhat</strong>, presented in a MAGA-inspired theme.
+        The site highlights public repositories, approach to building software, and how to reach out.
+      </p>
+    </section>
+
+    <section id="projects" class="card">
+      <h2>Featured repositories</h2>
+      <p class="muted">Live feed of public repositories (top non-fork repos by stars/recency).</p>
+      <div id="repo-list" class="repo-grid" aria-live="polite">
+        <div class="loader">Loading repositories…</div>
+      </div>
+    </section>
+
+    <section id="contact" class="card">
+      <h2>Contact</h2>
+      <p>
+        Best place to reach: <a href="https://github.com/jlewisbhat" rel="noopener" target="_blank">@jlewisbhat</a>.
+        Open an issue on a repository for bugs or feature requests.
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="wrap">
+      <small>Styled in red, white &amp; blue · Hosted on GitHub Pages</small>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    const user = 'jlewisbhat';
+    const listEl = document.getElementById('repo-list');
+
+    function el(tag, props = {}, children = []) {
+      const n = document.createElement(tag);
+      Object.entries(props).forEach(([k,v]) => {
+        if (k === 'class') n.className = v;
+        else if (k === 'text') n.textContent = v;
+        else n.setAttribute(k, v);
+      });
+      children.forEach(c => c && n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+      return n;
+    }
+
+    function timeAgo(iso) {
+      try {
+        const diff = Date.now() - new Date(iso).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'just now';
+        if (mins < 60) return mins + 'm';
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + 'h';
+        const days = Math.floor(hrs / 24);
+        return days + 'd';
+      } catch {
+        return '';
+      }
+    }
+
+    fetch(`https://api.github.com/users/${user}/repos?per_page=100&sort=updated`)
+      .then(r => {
+        if (!r.ok) throw new Error('GitHub API rate limit or network issue');
+        return r.json();
+      })
+      .then(repos => {
+        const visible = repos
+          .filter(r => !r.fork)
+          .sort((a,b) => (b.stargazers_count - a.stargazers_count) || (new Date(b.updated_at) - new Date(a.updated_at)))
+          .slice(0, 8);
+
+        listEl.innerHTML = '';
+        if (!visible.length) {
+          listEl.appendChild(el('p', {class: 'muted'}, [el('span', {text: 'No public repositories found.'})]));
+          return;
+        }
+
+        visible.forEach(r => {
+          const card = el('article', {class: 'repo-card'});
+          const title = el('h4', {}, [
+            el('a', {href: r.html_url, target: '_blank', rel: 'noopener', text: r.name})
+          ]);
+          const desc = el('p', {class: 'repo-desc', text: r.description || ''});
+          const meta = el('div', {class: 'repo-meta'}, [
+            el('span', {class: 'meta-item', text: r.language || '—'}),
+            el('span', {class: 'meta-item', text: '★ ' + (r.stargazers_count || 0)}),
+            el('span', {class: 'meta-item', text: 'Updated ' + timeAgo(r.updated_at)})
+          ]);
+          card.appendChild(title);
+          if (r.description) card.appendChild(desc);
+          card.appendChild(meta);
+          listEl.appendChild(card);
+        });
+      })
+      .catch(err => {
+        listEl.innerHTML = '';
+        const msg = document.createElement('div');
+        msg.className = 'muted';
+        msg.textContent = 'Could not load repositories automatically. View them on GitHub: ';
+        const a = document.createElement('a');
+        a.href = `https://github.com/${user}`;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = `github.com/${user}`;
+        msg.appendChild(a);
+        listEl.appendChild(msg);
+        console.error(err);
+      });
+  })();
+  </script>
+</body>
+</html>
